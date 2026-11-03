@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Oswald:wght@200..700&family=Quattrocento:wght@400;700&family=Space+Grotesk:wght@300..700&family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap" rel="stylesheet">    <link rel="stylesheet" href="style.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>website design system</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DotGothic16&family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Oswald:wght@200..700&family=Quattrocento:wght@400;700&family=Space+Grotesk:wght@300..700&family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="nav">
@@ -14,25 +15,25 @@
     </div>
     
     <div class="title">
-        <h2>palet of colours</h2>
+        <h2>palette of colours</h2>
     </div>
 
-    <div class="colour-part">   
+    <div class="panel colour-part">   
         <div class="american-hops">
             <h3 class="colour-names">american hops</h3>
-            <h4 class="rgb">#80ef91</h4>
+            <p class="rgb">#80ef91</p>
         </div>
         <div class="polish-hops">
             <h3 class="colour-names">polish hops</h3>
-            <h4 class="rgb">#4ba54d</h4>
+            <p class="rgb">#4ba54d</p>
         </div>
         <div class="yeast">
             <h3 class="colour-names">yeast</h3>
-            <h4 class="rgb">#f3ef82</h4>
+            <p class="rgb">#f3ef82</p>
         </div>
         <div class="malt">
             <h3 class="colour-names">malt</h3>
-            <h4 class="rgb">#f0c15a</h4>
+            <p class="rgb">#f0c15a</p>
         </div>
     
     </div>
@@ -42,30 +43,30 @@
     </div>
 
     
-    <div class="fonts-part">
-          <div>
+    <div class="panel fonts-part">
+          <div class="pair-oswald">
             <h3 class="name-font">
               <span class="oswald">oswald</span> + <span class="quattrocento">quattrocento</span>
             </h3>
             <h3 class="example">example:</h3>
-            <h4 class="font-top">The quick brown fox jumps</h4>
-            <h4 class="font-bottom">over the lazy dog</h4>
+            <p class="font-top">The quick brown fox jumps</p>
+            <p class="font-bottom">over the lazy dog</p>
         </div>
-         <div>
+         <div class="pair-ubuntu">
             <h3 class="name-font">
              <span class="ubuntu">ubuntu</span> + <span class="open-sans">open sans</span>
             </h3>
             <h3 class="example">example:</h3>
-            <h4 class="font-top">The quick brown fox jumps</h4>
-            <h4 class="font-bottom">over the lazy dog</h4>
+            <p class="font-top">The quick brown fox jumps</p>
+            <p class="font-bottom">over the lazy dog</p>
         </div>
-         <div>
+         <div class="pair-dotgothic">
             <h3 class="name-font">
              <span class="dotgothic">dotGothic16</span> + <span class="space-grotesk">space grotesk</span>
             </h3>
             <h3 class="example">example:</h3>
-            <h4 class="font-top">The quick brown fox jumps</h4>
-            <h4 class="font-bottom">over the lazy dog</h4>
+            <p class="font-top">The quick brown fox jumps</p>
+            <p class="font-bottom">over the lazy dog</p>
         </div>
     </div>
 
@@ -73,10 +74,10 @@
         <h2>styles</h2>
     </div>
 
-    <div class="style-part">
+    <div class="panel style-part">
     <div>
         <h3 class="style-name">main heading (h1)</h3>
-        <h1 class="style-h1">heading</h1>
+        <div class="style-h1">heading</div>
         <ul class="style-rules">
             <li>font-family: 'Lato', sans-serif;</li>
             <li>font-weight: 300;</li>
@@ -87,7 +88,7 @@
     </div>
     <div>
         <h3 class="style-name">section heading (h2)</h3>
-        <h2 class="style-h2"><s></s>ection heading</h2>
+        <div class="style-h2">section heading</div>
         <ul class="style-rules">
             <li>font-family: 'Lato', sans-serif;</li>
             <li>font-weight: 300;</li>
@@ -98,10 +99,10 @@
     </div>
     <div>
         <h3 class="style-name">card title (h3)</h3>
-        <h3 class="style-h3">sard title</h3>
+        <div class="style-h3">card title</div>
         <ul class="style-rules">
-            <li>font-family: Lato, sans-serif;</li>
-            <li>font-weight: 600;</li>
+            <li>font-family: 'Lato', sans-serif;</li>
+            <li>font-weight: 700;</li>
             <li>font-size: 22px;</li>
             <li>color: #0f2412;</li>
         </ul>
