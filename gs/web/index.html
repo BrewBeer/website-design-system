@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GS – sygnał</title>
+  <script>
+    // Motyw ustawiamy przed narysowaniem strony, żeby nie mignął zły kolor.
+    try { const t = localStorage.getItem("gs-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="vendor/lightweight-charts.standalone.production.js"></script>
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <header class="masthead">
+    <span class="brand" aria-label="Głupia strategia">GS</span>
+    <label class="visually-hidden" for="symbol">Instrument</label>
+    <select id="symbol"></select>
+    <label class="visually-hidden" for="interval">Interwał</label>
+    <select id="interval">
+      <option value="5m">5m</option>
+      <option value="15m">15m</option>
+    </select>
+
+    <nav class="tabs" role="tablist" aria-label="Widok">
+      <button type="button" role="tab" id="tab-btn-signal" aria-controls="tab-signal" aria-selected="true">Sygnał</button>
+      <button type="button" role="tab" id="tab-btn-results" aria-controls="tab-results" aria-selected="false" tabindex="-1">Wyniki</button>
+      <button type="button" role="tab" id="tab-btn-journal" aria-controls="tab-journal" aria-selected="false" tabindex="-1">Dziennik</button>
+      <button type="button" role="tab" id="tab-btn-settings" aria-controls="tab-settings" aria-selected="false" tabindex="-1">Ustawienia</button>
+    </nav>
+
+    <button type="button" class="btn btn--icon" id="refresh" aria-label="Odśwież dane" title="Odśwież dane">↻</button>
+    <button type="button" class="btn btn--icon" id="theme" aria-label="Przełącz tryb jasny/ciemny" title="Tryb jasny/ciemny">◐</button>
+  </header>
+
+  <main>
+    <!-- ============================================================ SYGNAŁ -->
+    <section id="tab-signal" role="tabpanel" aria-labelledby="tab-btn-signal" class="tab">
+      <!-- Jeden wyraźny stan. Widoczne od razu: jeśli skrypt się nie uruchomi, zostaje instrukcja. -->
+      <div id="verdict" class="verdict verdict--wait" aria-live="polite">
+        <div class="verdict__main">
+          <p class="verdict__word" id="verdict-word">BRAK POŁĄCZENIA</p>
+          <p class="verdict__sentence" id="verdict-sentence">
+            Ta strona działa tylko z serwerem GS. W terminalu, w folderze <code>gs</code>:
+            <code>.venv\Scripts\activate</code>, potem <code>uvicorn api.main:app --reload</code>,
+            i otwórz <a href="http://localhost:8000/">http://localhost:8000</a>.
+          </p>
+        </div>
+        <dl class="verdict__order" id="verdict-order" hidden></dl>
+        <div class="verdict__side">
+          <button type="button" class="btn btn--on-verdict" id="show-order" hidden>Pokaż zlecenie</button>
+          <p class="verdict__age" id="verdict-age"></p>
+        </div>
+      </div>
+
+      <section class="plan" id="plan" aria-labelledby="plan-title" hidden>
+        <h2 class="plan__title" id="plan-title">Plan na sesję</h2>
+        <ul class="plan__lines" id="plan-lines"></ul>
+      </section>
+
+      <div class="workspace">
+        <div class="panel panel--chart">
+          <div class="chart-wrap">
+            <div id="chart" class="chart" aria-label="Wykres świecowy"></div>
+            <canvas id="zones" class="chart__zones" aria-hidden="true"></canvas>
+            <div id="chart-message" class="chart__message" role="status" hidden></div>
+          </div>
+          <div class="chart-tools">
+          <button type="button" class="help-btn" id="open-legend" aria-label="Legenda: co oznaczają skróty i przyciski" title="Legenda">?</button>
+          <details class="more" id="more">
+            <summary>Więcej</summary>
+            <div class="more__body" role="group" aria-label="Dodatkowe elementy wykresu">
+              <label><input type="checkbox" data-toggle="sma"> Średnie SMA</label>
+              <label><input type="checkbox" data-toggle="volume"> Wolumen</label>
+              <label><input type="checkbox" data-toggle="history"> Sygnały z backtestu</label>
+              <label><input type="checkbox" data-toggle="rejected"> Odrzucone sygnały</label>
+            </div>
+          </details>
+          </div>
+        </div>
+
+        <div class="panel panel--ladder">
+          <h2 class="panel__title">Poziomy</h2>
+          <div id="ladder" class="ladder" role="list" aria-label="Najbliższe poziomy"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ WYNIKI -->
+    <section id="tab-results" role="tabpanel" aria-labelledby="tab-btn-results" class="tab panel" hidden>
+      <div class="panel__head">
+        <h2 class="panel__title">Wyniki strategii</h2>
+        <div class="segmented" role="group" aria-label="Okres">
+          <button type="button" data-period="1m" aria-pressed="true">1 mies.</button>
+          <button type="button" data-period="3m" aria-pressed="false">3 mies.</button>
+          <button type="button" data-period="ytd" aria-pressed="false">Od początku roku</button>
+          <button type="button" data-period="1y" aria-pressed="false">Rok</button>
+        </div>
+      </div>
+      <p class="coverage" id="coverage" hidden></p>
+      <div class="equity-wrap">
+        <div id="equity-chart" class="equity-chart" aria-label="Krzywa kapitału w R"></div>
+        <p class="equity-empty muted" id="equity-empty" hidden>Brak transakcji w tym okresie.</p>
+      </div>
+      <div id="backtest"></div>
+    </section>
+
+    <!-- ============================================================ DZIENNIK -->
+    <section id="tab-journal" role="tabpanel" aria-labelledby="tab-btn-journal" class="tab panel" hidden>
+      <div class="panel__head">
+        <h2 class="panel__title">Dziennik transakcji</h2>
+        <div class="filters" role="group" aria-label="Filtr dziennika">
+          <label class="chip"><input type="checkbox" data-filter="A" checked> A</label>
+          <label class="chip"><input type="checkbox" data-filter="B" checked> B</label>
+          <label class="chip"><input type="checkbox" data-filter="C" checked> C</label>
+          <label class="chip"><input type="checkbox" data-filter="long" checked> ▲ long</label>
+          <label class="chip"><input type="checkbox" data-filter="short" checked> ▼ short</label>
+        </div>
+        <a class="btn" id="export" href="#" download>Eksport CSV</a>
+      </div>
+      <div class="table-wrap">
+        <table class="journal">
+          <thead>
+            <tr>
+              <th scope="col"><button type="button" data-sort="entry_time">Data</button></th>
+              <th scope="col"><button type="button" data-sort="setup">Wzorzec</button></th>
+              <th scope="col"><button type="button" data-sort="side">Kierunek</button></th>
+              <th scope="col" class="num"><button type="button" data-sort="entry">Wejście</button></th>
+              <th scope="col" class="num"><button type="button" data-sort="sl">SL</button></th>
+              <th scope="col" class="num"><button type="button" data-sort="tp">TP</button></th>
+              <th scope="col" class="num"><button type="button" data-sort="result_r">Wynik R</button></th>
+              <th scope="col"><button type="button" data-sort="exit_reason">Wyjście</button></th>
+              <th scope="col">Notatka</th>
+            </tr>
+          </thead>
+          <tbody id="journal-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============================================================ USTAWIENIA -->
+    <section id="tab-settings" role="tabpanel" aria-labelledby="tab-btn-settings" class="tab panel" hidden>
+      <div class="panel__head">
+        <h2 class="panel__title">Ustawienia</h2>
+        <span id="custom-badge" class="badge" hidden>ustawienia własne</span>
+        <button type="button" class="btn" id="add-custom">+ Własny symbol</button>
+      </div>
+      <p class="muted" id="settings-info"></p>
+      <form id="params-form" class="settings"></form>
+      <div class="settings__foot">
+        <button type="button" class="btn" id="reset-params">Przywróć domyślne</button>
+        <button type="button" class="btn btn--primary" id="run-params">Zapisz i analizuj</button>
+      </div>
+      <h2 class="panel__title legend-heading">Legenda</h2>
+      <div class="legend" data-legend></div>
+    </section>
+  </main>
+
+  <!-- ============================================================ KARTA ZLECENIA -->
+  <dialog class="dialog" id="order-dialog" aria-labelledby="order-title">
+    <div class="dialog__head">
+      <h2 id="order-title" class="panel__title">Zlecenie</h2>
+      <button type="button" class="btn btn--icon" data-close aria-label="Zamknij">×</button>
+    </div>
+    <div class="dialog__body" id="order-body"></div>
+  </dialog>
+
+  <!-- ============================================================ LEGENDA -->
+  <dialog class="dialog dialog--wide" id="legend-dialog" aria-labelledby="legend-title">
+    <div class="dialog__head">
+      <h2 id="legend-title" class="panel__title">Legenda</h2>
+      <button type="button" class="btn btn--icon" data-close aria-label="Zamknij">×</button>
+    </div>
+    <div class="dialog__body legend" data-legend></div>
+  </dialog>
+
+  <!-- ============================================================ WŁASNY SYMBOL -->
+  <dialog class="dialog" id="custom-dialog" aria-labelledby="custom-title">
+    <div class="dialog__head">
+      <h2 id="custom-title" class="panel__title">Własny symbol</h2>
+      <button type="button" class="btn btn--icon" data-close aria-label="Zamknij">×</button>
+    </div>
+
+    <form id="custom-check-form" class="dialog__body">
+      <div class="param">
+        <label for="custom-symbol">Symbol Yahoo</label>
+        <input type="text" id="custom-symbol" name="symbol" required autocomplete="off" spellcheck="false"
+               placeholder="np. PKN.WA" aria-describedby="custom-symbol-h">
+        <small id="custom-symbol-h">Tak jak na finance.yahoo.com: akcje z GPW mają końcówkę .WA (PKN.WA),
+          amerykańskie bez końcówki (AAPL).</small>
+      </div>
+      <button type="submit" class="btn">Sprawdź dane</button>
+      <p id="custom-status" class="dialog__status" role="status"></p>
+    </form>
+
+    <form id="custom-form" class="dialog__body" hidden>
+      <div class="param"><label for="c-name">Nazwa</label><input type="text" id="c-name" name="name" required maxlength="40"></div>
+      <div class="param">
+        <label for="c-group">Grupa</label>
+        <select id="c-group" name="group">
+          <option>Akcje</option><option>Indeksy</option><option>Waluty</option>
+          <option>Surowce</option><option>Krypto</option><option>Własne</option>
+        </select>
+      </div>
+      <div class="param">
+        <label for="c-tz">Strefa czasowa giełdy</label>
+        <input type="text" id="c-tz" name="tz" required placeholder="Europe/Warsaw" aria-describedby="c-tz-h">
+        <small id="c-tz-h">Np. Europe/Warsaw, America/New_York. Podpowiedź pochodzi z Yahoo.</small>
+      </div>
+      <div class="param">
+        <label for="custom-session-type">Sesja</label>
+        <select id="custom-session-type" name="session_type">
+          <option value="hours">W godzinach</option>
+          <option value="24x5">Całodobowo pn–pt</option>
+          <option value="24x7">Całodobowo 7 dni</option>
+        </select>
+      </div>
+      <div class="param custom-hours"><label for="c-open">Otwarcie – czas giełdy, nie polski</label><input type="time" id="c-open" name="open" aria-describedby="c-hours-pl"></div>
+      <div class="param custom-hours"><label for="c-close">Zamknięcie – czas giełdy, nie polski</label><input type="time" id="c-close" name="close" aria-describedby="c-hours-pl"></div>
+      <p class="param-note custom-hours" id="c-hours-pl" role="status"></p>
+      <div class="param"><label for="c-tick">Tick</label><input type="text" id="c-tick" name="tick" required inputmode="decimal"></div>
+      <div class="param">
+        <label for="c-pv">Wartość punktu</label>
+        <input type="text" id="c-pv" name="point_value" required inputmode="decimal" aria-describedby="c-pv-h">
+        <small id="c-pv-h">Ile zarabiasz lub tracisz na ruchu o 1 punkt przy pozycji o rozmiarze 1.
+          Tick i wartość punktu – do sprawdzenia u Twojego brokera.</small>
+      </div>
+      <div class="param"><label for="c-currency">Waluta</label><input type="text" id="c-currency" name="currency" required maxlength="3" placeholder="PLN"></div>
+      <div class="dialog__foot"><button type="submit" class="btn btn--primary">Dodaj i analizuj</button></div>
+    </form>
+  </dialog>
+
+  <footer class="footer">
+    Sygnały służą do nauki i treningu na koncie demo. To nie jest rekomendacja inwestycyjna.
+  </footer>
+</body>
+</html>
